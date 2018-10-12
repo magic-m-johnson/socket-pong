@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        div {
+            box-sizing: border-box;
+        }
+
+        .active {
+            background: black;
+            color: white;
+        }
+
+        #field {
+            box-sizing: content-box;
+            margin: 60px auto;
+            width: 400px;
+            height: 400px;
+            border: 1px solid black;
+            position: relative;
+        }
+
+        #ball {
+            border-radius: 10px;
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: black;
+        }
+
+        #player1 {
+            position: absolute;
+            width: 10px;
+            height: 100px;
+            background: #000;
+            transition: top .1s;
+        }
+
+        #player2 {
+            position: absolute;
+            width: 10px;
+            height: 100px;
+            background: #000;
+            transition: top .1s;
+        }
+
+        #player3 {
+            position: absolute;
+            width: 100px;
+            height: 10px;
+            background: #000;
+            transition: left .1s;
+        }
+
+        #player4 {
+            position: absolute;
+            width: 100px;
+            height: 10px;
+            background: #000;
+            transition: left .1s;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .score {
+            position: absolute;
+            right: 0;
+            top: 0;
+            border: 1px solid #000;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            box-sizing: content-box;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 18px;
+            padding: 5px;
+            background: white;
+        }
+
+        .name {
+            box-sizing: content-box;
+            position: absolute;
+            padding: 5px;
+            border: 1px solid black;
+            border-radius: 5px;
+            height: 20px;
+            line-height: 20px;
+            width: 100px;
+            display:inline-block;
+        }
+
+        #player1 .score {
+            left: -50px;
+            top: 70px;
+        }
+
+        #player2 .score {
+            left: 30px;
+            top: 70px;
+        }
+
+        #player1 .name {
+            top: 30px;
+            left: -130px;
+        }
+
+        #player2 .name {
+            top: 30px;
+            left: 30px;
+        }
+
+        #player3 .name {
+            top: -50px;
+            left: -20px;
+        }
+
+
+        #player3 .score {
+            top: -50px;
+            left: 100px;
+        }
+
+        #player4 .score {
+            top: 30px;
+            left: 100px;
+        }
+
+        #player4 .name {
+            top: 30px;
+            left: -20px;
+        }
+
+        #container {
+            width: 800px;
+            margin: auto;
+        }
+
+        .touch  {
+            background: red;
+        }
+
+        #debug {
+            border: 1px solid red;
+            display: inline-block;
+            margin: 20px;
+            padding: 20px;
+            text-align: left;
+            width: 400px;
+        }
+
+        #players {
+            list-style: none;
+            margin: 10px 0;
+            padding: 0;
+        }
+        
+        #players li{
+            list-style: none;
+            display: inline-block;
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+        #popup {
+            width: 400px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+        .msg {
+            opacity: 1;
+            transition: opacity .5s;
+            margin: 10px;
+            padding: 10px;
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <h1>Socket Pong</h1>
+    <input maxlength="8" type="text" id="name" value=""/>
+    <ul id="players">
+    </ul>
+    <div id="field">
+        <div id="ball"></div>
+        <div id="player1"><div id="p1n" class="name">CPU</div><div class="score" id="p1s">0</div></div>
+        <div id="player2"><div id="p2n" class="name">CPU</div><div class="score" id="p2s">0</div></div>
+        <div id="player3"><div id="p3n" class="name">CPU</div><div class="score" id="p3s">0</div></div>
+        <div id="player4"><div id="p4n" class="name">CPU</div><div class="score" id="p4s">0</div></div>
+    </div>
+    <div id="debug">
+        <button id="play">Play</button>
+        <button id="reset">Reset</button>
+        <br>
+        <br>
+        <div id="score">
+            <div><strong>ball:</strong>
+                x: <span id="ballx"></span> y: <span id="bally"></span> mx: <span id="movex"></span>my: <span
+                    id="movey"></span></div>
+            <div>player 1: <strong id="player1score">0</strong> x: <span id="p1x"></span> y: <span id="p1y"></span></div>
+            <div>player 2: <strong id="player2score">0</strong> x: <span id="p2x"></span> y: <span id="p2y"></span></div>
+            <div>player 3: <strong id="player3score">0</strong> x: <span id="p3x"></span> y: <span id="p3y"></span></div>
+            <div>player 4: <strong id="player4score">0</strong> x: <span id="p4x"></span> y: <span id="p4y"></span></div>
+        </div>
+    </div>
+    <div id="popup">
+    </div>
+</div>
+<script type="text/javascript">
+    var _ = function (sel) {
+        return document.querySelector(sel);
+    };
+
+    var client = io();
+    var playId = null;
+
+    var keys = {
+        left: 37,
+        up: 38,
+        right: 39,
+        down: 40,
+        play: 80,
+        reset: 82
+    };
+
+    client.on('setId', function (id) {
+        playId = id;
+
+        if (id > 4) {
+            return; // spectator
+        }
+
+        var keyListener = function(e){
+            if (e.target.tagName === 'INPUT' || e.ctrlKey || e.altKey || e.shiftKey) {
+                return;
+            }
+
+            var key = e.which;
+
+            if (key == keys.reset) {
+                client.emit('reset');
+            }
+
+            if (key == keys.play) {
+                client.emit('pause');
+            }
+
+            if (playId < 3 && (key == keys.up || key == keys.down)) {
+                client.emit('updatePos', key === keys.down)
+            }
+
+            if (playId > 2 && (key == keys.left || key == keys.right)) {
+                client.emit('updatePos', key === keys.right)
+            }
+        };
+
+        window.addEventListener('keydown', keyListener);
+    });
+
+    var nameEl = _('#name');
+
+    nameEl.addEventListener('keydown', function(e){
+        e.which >= keys.left && e.which <= keys.down && this.blur();
+    });
+
+    client.on('updateName', function (name) {
+        nameEl.value = name;
+    });
+
+    var pn = {
+        1: _('#p1n'),
+        2: _('#p2n'),
+        3: _('#p3n'),
+        4: _('#p4n')
+    };
+
+    var ps = {
+        1: _('#p1s'),
+        2: _('#p2s'),
+        3: _('#p3s'),
+        4: _('#p4s')
+    };
+
+    var popup = _('#popup');
+
+    client.on('message', function(text){
+        var msg = document.createElement('div');
+        msg.className = 'msg';
+        msg.textContent = text;
+
+        popup.appendChild(msg);
+        setTimeout(function(){
+            msg.style.opacity = 0;
+            setTimeout(function(){
+                msg.remove();
+            }, 500);
+        }, 2000);
+    });
+
+    client.on('updatePlayerList', function (names) {
+        var html = '';
+        for (var i in names) {
+            if (names.hasOwnProperty(i)) {
+                var nom = (names[i]||("player" + (1 + parseInt(i))));
+                html += '<li>' + nom + '</li>';
+                if (i < 4) {
+                    pn[parseInt(i)+1].textContent = nom;
+                    pn[parseInt(i)+1].classList.add('active');
+                }
+            }
+        }
+
+        for (var a = 0, b=4; a < b; a++) {
+            if (!names.hasOwnProperty(a)) {
+                pn[a+1].textContent = 'CPU';
+                pn[a+1].classList.remove('active');
+            }
+        }
+
+
+        _('#players').innerHTML = html;
+    });
+
+    _('#name').addEventListener('keyup', function () {
+        client.emit('setName', this.value);
+    });
+
+    var play = _('#play');
+
+    play.addEventListener('click', function () {
+        client.emit('pause');
+    });
+
+    var reset = _('#reset');
+
+    reset.addEventListener('click', function () {
+        client.emit('reset');
+    });
+
+    var ball = _('#ball');
+
+    var players = {
+        1: _('#player1'),
+        2: _('#player2'),
+        3: _('#player3'),
+        4: _('#player4')
+    };
+
+    var b = {x: _('#ballx'), y: _('#bally')};
+    var p = {
+        1: {x: _('#p1x'), y: _('#p1y')},
+        2: {x: _('#p2x'), y: _('#p2y')},
+        3: {x: _('#p3x'), y: _('#p3y')},
+        4: {x: _('#p4x'), y: _('#p4y')}
+    };
+    var move = {x: _('#movex'), y: _('#movey')};
+    var score = {
+        1: _('#player1score'),
+        2: _('#player2score'),
+        3: _('#player3score'),
+        4: _('#player4score')
+    };
+
+    client.on('update', function (data) {
+        ball.style.left = data.ball.x + 'px';
+        ball.style.top = data.ball.y + 'px';
+
+
+        pn[1].classList.remove('touch');
+        pn[2].classList.remove('touch');
+        pn[3].classList.remove('touch');
+        pn[4].classList.remove('touch');
+        
+        if (data.lastTouch) {
+            pn[data.lastTouch].classList.add('touch');
+        }
+
+        ps[1].textContent = score[1].textContent = data.score[1];
+        ps[2].textContent = score[2].textContent = data.score[2];
+        ps[3].textContent = score[3].textContent = data.score[3];
+        ps[4].textContent = score[4].textContent = data.score[4];
+
+        b.x.textContent = data.ball.x;
+        b.y.textContent = data.ball.y;
+
+        move.x.textContent = data.speed.x;
+        move.y.textContent = data.speed.y;
+
+        players[1].style.left = data.players[1].x + 'px';
+        players[2].style.left = data.players[2].x + 'px';
+        players[3].style.left = data.players[3].x + 'px';
+        players[4].style.left = data.players[4].x + 'px';
+
+        players[1].style.top = data.players[1].y + 'px';
+        players[2].style.top = data.players[2].y + 'px';
+        players[3].style.top = data.players[3].y + 'px';
+        players[4].style.top = data.players[4].y + 'px';
+
+        p[1].x.textContent = data.players[1].x;
+        p[2].x.textContent = data.players[2].x;
+        p[3].x.textContent = data.players[3].x;
+        p[4].x.textContent = data.players[4].x;
+
+        p[1].y.textContent = data.players[1].y;
+        p[2].y.textContent = data.players[2].y;
+        p[3].y.textContent = data.players[3].y;
+        p[4].y.textContent = data.players[4].y;
+
+
+    });
+    //setInterval(updatePositions, 16);
+
+</script>
+</body>
+</html>
