@@ -13,7 +13,7 @@ var debug = false;
 var socket = io(server);
 var playerCount = 0;
 var names = [];
-
+var reload = true;
 var pos = {x: 195, y: 195};
 var move = ball();
 
@@ -255,36 +255,42 @@ function updateBall() {
 
         if (between(pos.y, 10, 20) && between(pos.x, playerPos[3].x - 10, playerPos[3].x + 100)) {
             move.y *= -1.1;
-            middleBar = playerPos[2].x + 50;
-            middleBall = pos.x + 5;
+            if (playerCount > 2) {
+                middleBar = playerPos[2].x + 50;
+                middleBall = pos.x + 5;
 
-            speedSum = abs(move.x) + abs(move.y);
-            move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
-            speedChange = abs(move.x) + abs(move.y);
+                speedSum = abs(move.x) + abs(move.y);
+                move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
+                speedChange = abs(move.x) + abs(move.y);
 
-            if (speedChange < speedSum) {
-                speedDiff = speedSum - speedChange;
-                move.y += move.y > 0 ? speedDiff : -speedDiff;
+                if (speedChange < speedSum) {
+                    speedDiff = speedSum - speedChange;
+                    move.y += move.y > 0 ? speedDiff : -speedDiff;
+                }
+
+                lastTouch = 3;
             }
 
             pos.y = 20;
-            lastTouch = 3;
         } else if (between(pos.y, 370, 380) && between(pos.x, playerPos[4].x - 10, playerPos[4].x + 100)) {
             move.y *= -1.1;
-            middleBar = playerPos[2].x + 50;
-            middleBall = pos.x + 5;
 
-            speedSum = abs(move.x) + abs(move.y);
-            move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
-            speedChange = abs(move.x) + abs(move.y);
+            if (playerCount > 3) {
+                middleBar = playerPos[2].x + 50;
+                middleBall = pos.x + 5;
+                speedSum = abs(move.x) + abs(move.y);
+                move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
+                speedChange = abs(move.x) + abs(move.y);
 
-            if (speedChange < speedSum) {
-                speedDiff = speedSum - speedChange;
-                move.y += move.y > 0 ? speedDiff : -speedDiff;
+                if (speedChange < speedSum) {
+                    speedDiff = speedSum - speedChange;
+                    move.y += move.y > 0 ? speedDiff : -speedDiff;
+                }
+
+                lastTouch = 4;
             }
 
             pos.y = 370;
-            lastTouch = 4;
         }
         else if (pos.y >= 390 || pos.y <= 0) {
             if (pos.y <= 0) {
@@ -299,12 +305,12 @@ function updateBall() {
 
             move.y *= -1.1
         }
-
-        move.x > 5 && (move.x = 5);
-        move.y > 5 && (move.y = 5);
-
-        move.x < -5 && (move.x = -5);
-        move.y < -5 && (move.y = -5);
+        //
+        // move.x > 5 && (move.x = 5);
+        // move.y > 5 && (move.y = 5);
+        //
+        // move.x < -5 && (move.x = -5);
+        // move.y < -5 && (move.y = -5);
         
         pos.x = round(pos.x, 1);
         pos.y = round(pos.y, 1);
@@ -321,12 +327,15 @@ setInterval(function(){
         paused: paused,
         ball: pos,
         players: playerPos,
-        speed: move,
+        move: move,
         score: score,
         lastTouch: lastTouch,
         speed: speed,
-        debug: debug
+        debug: debug,
+        reload: reload
     });
+
+    reload = false;
 }, 16);
 
-server.listen(3001);
+server.listen(3000);

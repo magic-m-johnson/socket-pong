@@ -16,6 +16,7 @@
         .active {
             background: black;
             color: white;
+            font-weight: bold;
         }
 
         #field {
@@ -49,6 +50,10 @@
             border: 1px solid #8c8c8c;
             border-radius: 5px;
             text-align: center;
+        }
+
+        .player {
+            border-radius: 5px;
         }
 
         #player2 {
@@ -209,10 +214,10 @@
     </ul>
     <div id="field">
         <div id="ball"></div>
-        <div id="player1"><div id="p1n" class="name">CPU</div><div class="score" id="p1s">0</div></div>
-        <div id="player2"><div id="p2n" class="name">CPU</div><div class="score" id="p2s">0</div></div>
-        <div id="player3"><div id="p3n" class="name">CPU</div><div class="score" id="p3s">0</div></div>
-        <div id="player4"><div id="p4n" class="name">CPU</div><div class="score" id="p4s">0</div></div>
+        <div class="player" id="player1"><div id="p1n" class="name">CPU</div><div class="score" id="p1s">0</div></div>
+        <div class="player" id="player2"><div id="p2n" class="name">CPU</div><div class="score" id="p2s">0</div></div>
+        <div class="player" id="player3"><div id="p3n" class="name">CPU</div><div class="score" id="p3s">0</div></div>
+        <div class="player" id="player4"><div id="p4n" class="name">CPU</div><div class="score" id="p4s">0</div></div>
     </div>
     <div id="debug">
         <button id="play">Play</button>
@@ -242,6 +247,7 @@
     var playId = null;
 
     var keys = {
+        enter: 13,
         left: 37,
         up: 38,
         right: 39,
@@ -289,7 +295,7 @@
     var nameEl = _('#name');
 
     nameEl.addEventListener('keydown', function(e){
-        e.which >= keys.left && e.which <= keys.down && this.blur();
+        (e.which === keys.enter || e.which >= keys.left && e.which <= keys.down) && this.blur();
     });
 
     var pn = {
@@ -389,6 +395,11 @@
     };
 
     client.on('update', function (data) {
+        if (data.reload) {
+            window.location = window.location;
+            return;
+        }
+
         field.style.display = 'block';
         pn[1].classList.remove('touch');
         pn[2].classList.remove('touch');
@@ -399,10 +410,6 @@
         }
         ball.style.left = data.ball.x + 'px';
         ball.style.top = data.ball.y + 'px';
-        score[1].textContent = data.score[1];
-        score[2].textContent = data.score[2];
-        score[3].textContent = data.score[3];
-        score[4].textContent = data.score[4];
         players[1].style.left = data.players[1].x + 'px';
         players[2].style.left = data.players[2].x + 'px';
         players[3].style.left = data.players[3].x + 'px';
@@ -411,29 +418,32 @@
         players[2].style.top = data.players[2].y + 'px';
         players[3].style.top = data.players[3].y + 'px';
         players[4].style.top = data.players[4].y + 'px';
+        ps[1].textContent = data.score[1];
+        ps[2].textContent = data.score[2];
+        ps[3].textContent = data.score[3];
+        ps[4].textContent = data.score[4];
 
         if (data.debug) {
             debug.style.display='inline-block';
-            ps[1].textContent = data.score[1];
-            ps[2].textContent = data.score[2];
-            ps[3].textContent = data.score[3];
-            ps[4].textContent = data.score[4];
             speed.textContent = data.speed;
+            score[1].textContent = data.score[1];
+            score[2].textContent = data.score[2];
+            score[3].textContent = data.score[3];
+            score[4].textContent = data.score[4];
             b.x.textContent = data.ball.x;
             b.y.textContent = data.ball.y;
             p[1].x.textContent = data.players[1].x;
             p[2].x.textContent = data.players[2].x;
             p[3].x.textContent = data.players[3].x;
             p[4].x.textContent = data.players[4].x;
-            move.x.textContent = data.speed.x;
-            move.y.textContent = data.speed.y;
+            move.x.textContent = data.move.x;
+            move.y.textContent = data.move.y;
             p[1].y.textContent = data.players[1].y;
             p[2].y.textContent = data.players[2].y;
             p[3].y.textContent = data.players[3].y;
             p[4].y.textContent = data.players[4].y;
         } else if (debug) {
-            debug.remove();
-            debug = null;
+            debug.style.display = 'none';
         }
     });
 </script>
