@@ -2,34 +2,6 @@ var http = require('http');
 var fs = require('fs');
 var io = require('socket.io');
 
-var server = http.createServer(function(request, response){
-    fs.readFile('index.html', function(error, data){
-        response.end(data);
-    });
-});
-
-var debug = false;
-
-var socket = io(server);
-var playerCount = 0;
-var names = [];
-var reload = true;
-var pos = {x: 195, y: 195};
-var move = ball();
-var winner = null;
-
-var paused = true;
-var score = {
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0
-};
-
-function pick(a, b) {
-    return [a, b][Math.round(Math.random())]
-}
-
 var players = {
     1: 'cpu',
     2: 'cpu',
@@ -43,6 +15,38 @@ var playerPos = {
     3: {x: 150, y: 10},
     4: {x: 150, y: 380}
 };
+
+var server = http.createServer(function(request, response){
+    fs.readFile('index.html', function(error, data){
+        response.end(data);
+    });
+});
+
+var debug = false;
+var socket = io(server);
+var playerCount = 0;
+var names = [];
+var reload = true;
+var pos = {x: 195, y: 195};
+var move = ball();
+var winner = null;
+var paused = true;
+var fieldSize = 400;
+var ballSize = 10;
+var maxPos = fieldSize - ballSize;
+var lastTouch = 0;
+var step = 50;
+var speed = 0;
+var score = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0
+};
+
+function pick(a, b) {
+    return [a, b][Math.round(Math.random())]
+}
 
 function ball() {
     var x = 1 + rand(.5, 1.5);
@@ -157,13 +161,6 @@ socket.on('connection', function(client){
         reset();
     });
 });
-
-var fieldSize = 400;
-var ballSize = 10;
-var maxPos = fieldSize - ballSize;
-var lastTouch = 0;
-var step = 50;
-var speed = 0;
 
 function updateBall() {
     if (!paused) {
