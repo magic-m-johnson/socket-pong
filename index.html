@@ -5,7 +5,8 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Socket Pong</title>
+    <link href="https://fonts.googleapis.com/css?family=Mali" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         div {
@@ -18,6 +19,7 @@
         }
 
         #field {
+            display: none;
             box-sizing: content-box;
             margin: 60px auto;
             width: 400px;
@@ -40,6 +42,13 @@
             height: 100px;
             background: #000;
             transition: top .1s;
+        }
+
+        #name {
+            padding: 5px;
+            border: 1px solid #8c8c8c;
+            border-radius: 5px;
+            text-align: center;
         }
 
         #player2 {
@@ -70,7 +79,8 @@
             margin: 0;
             padding: 0;
             text-align: center;
-            font-family: Arial, sans-serif;
+            overflow: hidden;
+            font-family: Mali, Arial, sans-serif;
         }
 
         .score {
@@ -154,8 +164,8 @@
         }
 
         #debug {
+            display: none;
             border: 1px solid red;
-            display: inline-block;
             margin: 20px;
             padding: 20px;
             text-align: left;
@@ -194,7 +204,7 @@
 <body>
 <div id="container">
     <h1>Socket Pong</h1>
-    <input maxlength="8" type="text" id="name" value=""/>
+    <input maxlength="8" type="text" id="name" placeholder="your name" value=""/>
     <ul id="players">
     </ul>
     <div id="field">
@@ -209,6 +219,7 @@
         <button id="reset">Reset</button>
         <br>
         <br>
+        <div><strong>Speed:</strong> <span id="speed"></span></div>
         <div id="score">
             <div><strong>ball:</strong>
                 x: <span id="ballx"></span> y: <span id="bally"></span> mx: <span id="movex"></span>my: <span
@@ -238,6 +249,8 @@
         play: 80,
         reset: 82
     };
+
+    var field = _('#field');
 
     client.on('setId', function (id) {
         playId = id;
@@ -277,10 +290,6 @@
 
     nameEl.addEventListener('keydown', function(e){
         e.which >= keys.left && e.which <= keys.down && this.blur();
-    });
-
-    client.on('updateName', function (name) {
-        nameEl.value = name;
     });
 
     var pn = {
@@ -337,7 +346,7 @@
         _('#players').innerHTML = html;
     });
 
-    _('#name').addEventListener('keyup', function () {
+    nameEl.addEventListener('keyup', function () {
         client.emit('setName', this.value);
     });
 
@@ -354,6 +363,8 @@
     });
 
     var ball = _('#ball');
+    var speed = _('#speed');
+    var debug = _('#debug');
 
     var players = {
         1: _('#player1'),
@@ -378,54 +389,53 @@
     };
 
     client.on('update', function (data) {
-        ball.style.left = data.ball.x + 'px';
-        ball.style.top = data.ball.y + 'px';
-
-
+        field.style.display = 'block';
         pn[1].classList.remove('touch');
         pn[2].classList.remove('touch');
         pn[3].classList.remove('touch');
         pn[4].classList.remove('touch');
-        
         if (data.lastTouch) {
             pn[data.lastTouch].classList.add('touch');
         }
-
-        ps[1].textContent = score[1].textContent = data.score[1];
-        ps[2].textContent = score[2].textContent = data.score[2];
-        ps[3].textContent = score[3].textContent = data.score[3];
-        ps[4].textContent = score[4].textContent = data.score[4];
-
-        b.x.textContent = data.ball.x;
-        b.y.textContent = data.ball.y;
-
-        move.x.textContent = data.speed.x;
-        move.y.textContent = data.speed.y;
-
+        ball.style.left = data.ball.x + 'px';
+        ball.style.top = data.ball.y + 'px';
+        score[1].textContent = data.score[1];
+        score[2].textContent = data.score[2];
+        score[3].textContent = data.score[3];
+        score[4].textContent = data.score[4];
         players[1].style.left = data.players[1].x + 'px';
         players[2].style.left = data.players[2].x + 'px';
         players[3].style.left = data.players[3].x + 'px';
         players[4].style.left = data.players[4].x + 'px';
-
         players[1].style.top = data.players[1].y + 'px';
         players[2].style.top = data.players[2].y + 'px';
         players[3].style.top = data.players[3].y + 'px';
         players[4].style.top = data.players[4].y + 'px';
 
-        p[1].x.textContent = data.players[1].x;
-        p[2].x.textContent = data.players[2].x;
-        p[3].x.textContent = data.players[3].x;
-        p[4].x.textContent = data.players[4].x;
-
-        p[1].y.textContent = data.players[1].y;
-        p[2].y.textContent = data.players[2].y;
-        p[3].y.textContent = data.players[3].y;
-        p[4].y.textContent = data.players[4].y;
-
-
+        if (data.debug) {
+            debug.style.display='inline-block';
+            ps[1].textContent = data.score[1];
+            ps[2].textContent = data.score[2];
+            ps[3].textContent = data.score[3];
+            ps[4].textContent = data.score[4];
+            speed.textContent = data.speed;
+            b.x.textContent = data.ball.x;
+            b.y.textContent = data.ball.y;
+            p[1].x.textContent = data.players[1].x;
+            p[2].x.textContent = data.players[2].x;
+            p[3].x.textContent = data.players[3].x;
+            p[4].x.textContent = data.players[4].x;
+            move.x.textContent = data.speed.x;
+            move.y.textContent = data.speed.y;
+            p[1].y.textContent = data.players[1].y;
+            p[2].y.textContent = data.players[2].y;
+            p[3].y.textContent = data.players[3].y;
+            p[4].y.textContent = data.players[4].y;
+        } else if (debug) {
+            debug.remove();
+            debug = null;
+        }
     });
-    //setInterval(updatePositions, 16);
-
 </script>
 </body>
 </html>

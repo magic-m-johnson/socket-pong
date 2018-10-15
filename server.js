@@ -8,6 +8,8 @@ var server = http.createServer(function(request, response){
     });
 });
 
+var debug = false;
+
 var socket = io(server);
 var playerCount = 0;
 var names = [];
@@ -109,14 +111,11 @@ socket.on('connection', function(client){
 
     client.broadcast.emit('message', clientData.name + ' joined' + (playerCount > 4 ? ' as spectator' : ''));
     client.emit('message',  'joined as ' + clientData.name);
-
     client.emit('setId', playId);
-    client.emit('updateName', clientData.name);
-
     socket.emit('updatePlayerList', names);
 
     client.on('updatePos', function(change){
-        change = change ? 50 : -50;
+        change = change ? step : -step;
         if (playId > 2) {
             playerPos[playId].x += change;
             playerPos[playId].x < 0 && (playerPos[playId].x = 0);
@@ -161,35 +160,39 @@ var fieldSize = 400;
 var ballSize = 10;
 var maxPos = fieldSize - ballSize;
 var lastTouch = 0;
+var step = 50;
+var speed = 0;
 
 function updateBall() {
     if (!paused) {
         pos.x += move.x;
         pos.y += move.y;
 
+        speed = round(abs(move.x) + abs(move.y), 1);
+
         pos.x < 0 && (pos.x = 0);
         pos.x > maxPos && (pos.x = maxPos);
 
         for (var p = playerCount + 1; p <= 4; p++) {
             if (p > 2) {
-                if (pos.x < playerPos[p].x) {
-                    playerPos[p].x -= 10;
+                if (pos.x + 5 < playerPos[p].x + 50) {
+                    playerPos[p].x -= step;
                 }
 
-                if (pos.x + 10 > playerPos[p].x + 100) {
-                    playerPos[p].x += 10;
+                if (pos.x + 5 > playerPos[p].x + 50) {
+                    playerPos[p].x += step;
                 }
 
                 playerPos[p].x > 300 && (playerPos[p].x = 300);
                 playerPos[p].x < 0 && (playerPos[p].x = 0);
                 
             } else {
-                if (pos.y < playerPos[p].y) {
-                    playerPos[p].y -= 10;
+                if (pos.y + 5 < playerPos[p].y + 50) {
+                    playerPos[p].y -= step;
                 }
 
-                if (pos.y + 10 > playerPos[p].y + 100) {
-                    playerPos[p].y += 10;
+                if (pos.y + 5 > playerPos[p].y + 50) {
+                    playerPos[p].y += step;
                 }
                 
                 playerPos[p].y > 300 && (playerPos[p].y = 300);
@@ -197,14 +200,42 @@ function updateBall() {
             }
         }
 
-        if (between(pos.x, 10, 20) && between(pos.y, playerPos[1].y, playerPos[1].y + 90)) {
+        var middleBar = 0;
+        var middleBall = 0;
+        var speedSum = 0;
+        var speedChange = 0;
+        var speedDiff = 0;
+
+        if (between(pos.x, 10, 20) && between(pos.y, playerPos[1].y - 10, playerPos[1].y + 100)) {
             move.x *= -1.1;
-            move.y += rand(-.5, .5);
+            middleBar = playerPos[1].y + 50;
+            middleBall = pos.y + 5;
+
+            speedSum = abs(move.x) + abs(move.y);
+            move.y += middleBall < middleBar ? -rand(0, move.y < 1 ? 1 : move.y) : (middleBall > middleBar ? rand(0, move.y < 1 ? 1 : move.y) : 0);
+            speedChange = abs(move.x) + abs(move.y);
+
+            if (speedChange < speedSum) {
+                speedDiff = speedSum - speedChange;
+                move.x += move.x > 0 ? speedDiff : -speedDiff;
+            }
+
             pos.x = 20;
             lastTouch = 1;
-        } else if (between(pos.x, 370, 380) && between(pos.y, playerPos[2].y, playerPos[2].y + 90)) {
+        } else if (between(pos.x, 370, 380) && between(pos.y, playerPos[2].y - 10, playerPos[2].y + 100)) {
             move.x *= -1.1;
-            move.y += rand(-.5, .5);
+            middleBar = playerPos[2].y + 50;
+            middleBall = pos.y + 5;
+
+            speedSum = abs(move.x) + abs(move.y);
+            move.y += middleBall < middleBar ? -rand(0, move.y < 1 ? 1 : move.y) : (middleBall > middleBar ? rand(0, move.y < 1 ? 1 : move.y) : 0);
+            speedChange = abs(move.x) + abs(move.y);
+
+            if (speedChange < speedSum) {
+                speedDiff = speedSum - speedChange;
+                move.x += move.x > 0 ? speedDiff : -speedDiff;
+            }
+
             pos.x = 370;
             lastTouch = 2;
         } else if (pos.x >= 390 || pos.x <= 0) {
@@ -222,14 +253,36 @@ function updateBall() {
         }
 
 
-        if (between(pos.y, 10, 20) && between(pos.x, playerPos[3].x, playerPos[3].x + 90)) {
+        if (between(pos.y, 10, 20) && between(pos.x, playerPos[3].x - 10, playerPos[3].x + 100)) {
             move.y *= -1.1;
-            move.x += rand(-.5, .5);
+            middleBar = playerPos[2].x + 50;
+            middleBall = pos.x + 5;
+
+            speedSum = abs(move.x) + abs(move.y);
+            move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
+            speedChange = abs(move.x) + abs(move.y);
+
+            if (speedChange < speedSum) {
+                speedDiff = speedSum - speedChange;
+                move.y += move.y > 0 ? speedDiff : -speedDiff;
+            }
+
             pos.y = 20;
             lastTouch = 3;
-        } else if (between(pos.y, 370, 380) && between(pos.x, playerPos[4].x, playerPos[4].x + 90)) {
+        } else if (between(pos.y, 370, 380) && between(pos.x, playerPos[4].x - 10, playerPos[4].x + 100)) {
             move.y *= -1.1;
-            move.x += rand(-.5, .5);
+            middleBar = playerPos[2].x + 50;
+            middleBall = pos.x + 5;
+
+            speedSum = abs(move.x) + abs(move.y);
+            move.x += middleBall < middleBar ? -rand(0, move.x < 1 ? 1 : move.x) : (middleBall > middleBar ? rand(0, move.x < 1 ? 1 : move.x) : 0);
+            speedChange = abs(move.x) + abs(move.y);
+
+            if (speedChange < speedSum) {
+                speedDiff = speedSum - speedChange;
+                move.y += move.y > 0 ? speedDiff : -speedDiff;
+            }
+
             pos.y = 370;
             lastTouch = 4;
         }
@@ -270,7 +323,9 @@ setInterval(function(){
         players: playerPos,
         speed: move,
         score: score,
-        lastTouch: lastTouch
+        lastTouch: lastTouch,
+        speed: speed,
+        debug: debug
     });
 }, 16);
 
