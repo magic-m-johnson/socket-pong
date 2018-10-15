@@ -22,7 +22,7 @@
         #field {
             display: none;
             box-sizing: content-box;
-            margin: 60px auto;
+            margin: 100px auto 0;
             width: 400px;
             height: 400px;
             border: 1px solid black;
@@ -204,6 +204,39 @@
             padding: 10px;
             background: #ccc;
         }
+
+        #winner {
+            width: 300px;
+            height: 100px;
+            border: 5px solid red;
+            position: absolute;
+            border-radius: 10px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            z-index: 100;
+            background: white;
+            line-height: 100px;
+            margin-top: -50px;
+            margin-left: -150px;
+            font-size: 30px;
+            vertical-align: center;
+            text-align: center;
+            transform: scale(0);
+            transition: transform .2s;
+            display: none;
+        }
+        #winner.on {
+            display: block;
+        }
+        #winner.show {
+            transform: scale(1);
+        }
+        #winner span {
+            vertical-align: center;
+            display: inline-block;
+            line-height: 30px;
+        }
     </style>
 </head>
 <body>
@@ -213,6 +246,7 @@
     <ul id="players">
     </ul>
     <div id="field">
+        <div id="winner"><span id="winner">Markus won!</span></div>
         <div id="ball"></div>
         <div class="player" id="player1"><div id="p1n" class="name">CPU</div><div class="score" id="p1s">0</div></div>
         <div class="player" id="player2"><div id="p2n" class="name">CPU</div><div class="score" id="p2s">0</div></div>
@@ -245,6 +279,7 @@
 
     var client = io();
     var playId = null;
+    var game = true;
 
     var keys = {
         enter: 13,
@@ -274,6 +309,10 @@
 
             if (key == keys.reset) {
                 client.emit('reset');
+            }
+
+            if (!game) {
+                return;
             }
 
             if (key == keys.play) {
@@ -394,10 +433,26 @@
         4: _('#player4score')
     };
 
+    var winner = _('#winner');
+    var winner = _('#winner');
+
     client.on('update', function (data) {
         if (data.reload) {
             window.location = window.location;
             return;
+        }
+
+        if (data.winner) {
+            game = false;
+            winner.textContent = data.winner + ' won!';
+            winner.classList.add('on');
+            setTimeout(function(){
+                winner.classList.add('show');
+            }, 16);
+            return;
+        } else {
+            winner.textContent = '';
+            winner.className = '';
         }
 
         field.style.display = 'block';
